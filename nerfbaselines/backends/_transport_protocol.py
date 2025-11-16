@@ -151,17 +151,20 @@ def _tcp_pickle_recv(conn: socket.socket, allocator=None, zero_copy=False):
         buffer = bytearray(size)
         i = 0
         while i < size:
-            n = conn.recv_into(memoryview(buffer)[i:], size-i)
+            n = conn.recv_into(memoryview(buffer)[i:], size-i, socket.MSG_WAITALL)
             if n == 0:
                 if i == size: raise EOFError
                 else: raise OSError("got end of file during message")
             i += n
         return buffer
 
-    data = conn.recv(12)
+    data = conn.recv(12, socket.MSG_WAITALL)
     if len(data) < 12: raise EOFError
     num_buffers, size, = struct.unpack("!iQ", data)
-    header = struct.unpack(f"!{(num_buffers-1)*2}Q", conn.recv(16*(num_buffers-1)))
+    header = struct.unpack(
+        f"!{(num_buffers-1)*2}Q", 
+        conn.recv(16*(num_buffers-1), socket.MSG_WAITALL)
+    )
     pickle_bytes = _read_buffer(size)
     buffers = []
     for shm_offset, buffer_size in zip(header[::2], header[1::2]):
@@ -548,7 +551,7 @@ def deliver_challenge(conn: socket.socket, authkey):
     message = os.urandom(20)
     conn.sendall(message)
     digest = hmac.new(authkey, message, 'md5').digest()
-    response = conn.recv(len(digest))
+    response = conn.recv(len(digest), socket.MSG_WAITALL)
     if len(response) < len(digest):
         raise ConnectionError("Failed to receive response")
     conn.sendall(b'1' if response == digest else b'0')
@@ -556,11 +559,11 @@ def deliver_challenge(conn: socket.socket, authkey):
 
 def answer_challenge(conn: socket.socket, authkey):
     import hmac
-    message = conn.recv(20)
+    message = conn.recv(20, socket.MSG_WAITALL)
     if len(message) != 20:
         raise ConnectionError("Failed to receive challenge")
     digest = hmac.new(authkey, message, 'md5').digest()
     conn.sendall(digest)
-    response = conn.recv(1)
+    response = conn.recv(1, socket.MSG_WAITALL)
     if response != b'1':
         raise ConnectionError('Failed to authenticate')
