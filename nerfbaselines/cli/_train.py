@@ -27,7 +27,7 @@ from ._common import SetParamOptionType, TupleClickType, IndicesClickType, click
 @click.option("--data", type=str, required=True, help=(
     "A path to the dataset to train on. The dataset can be either an external dataset (e.g., a path starting with `external://{dataset}/{scene}`) or a local path to a dataset. If the dataset is an external dataset, the dataset will be downloaded and cached locally. If the dataset is a local path, the dataset will be loaded directly from the specified path."))
 @click.option("--output", type=str, default=".", help="Output directory to save the training results", show_default=True)
-@click.option("--logger", type=click.Choice(["none", "wandb", "tensorboard", "wandb,tensorboard"]), default="tensorboard", help="Logger to use.", show_default=True)
+@click.option("--logger", type=str, default="tensorboard", help="Logger to use. Can also be list of loggers separated by commas (e.g., 'tensorboard,wandb')", show_default=True)
 @click.option("--save-iters", type=IndicesClickType(), default=Indices([-1]), help="When to save the model", show_default=True)
 @click.option("--eval-few-iters", type=IndicesClickType(), default=Indices.every_iters(2_000), help="When to evaluate on few images", show_default=True)
 @click.option("--eval-all-iters", type=IndicesClickType(), default=Indices([-1]), help="When to evaluate all images", show_default=True)

@@ -19,10 +19,9 @@ class LazyGroup(click.Group):
                 if ":" in package:
                     package, fname = package.split(":")
                 package = getattr(importlib.import_module(package, __name__), fname)
-            command = copy.deepcopy(package)
-            command.name = cmd_name
-            command.hidden = cmd_def.get("hidden", False)
-            return command
+            package.name = cmd_name
+            package.hidden = cmd_def.get("hidden", False)
+            return package
         return super().get_command(ctx, cmd_name)
 
     def list_commands(self, ctx):
